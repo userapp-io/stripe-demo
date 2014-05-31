@@ -23,7 +23,7 @@ Open the file `js/config.js` and replace the following parameters:
 * `PRICE_LIST_ID` - Set up a price list with different plans and replace this with your price lsit id: <http://help.userapp.io/customer/portal/articles/1245685-setting-up-your-price-lists>
 * `YOUR_PUBLISHABLE_STRIPE_KEY` - Replace with your Publishable Key from Stripe
 
-**Test it**
+**Try it**
 
 Open the file `pricing.html` in your browser. If it works, it should display your price plans that you previously set up. Else it will display an error message with further instructions.
 
