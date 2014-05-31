@@ -3,6 +3,11 @@ UserApp + Stripe
 
 Demonstration of how to use [UserApp](https://www.userapp.io/) and [Stripe](https://stripe.com/) to create pricing with sign-up.
 
+**Note! This demo is not ready for use just yet.**
+
+![](https://raw.githubusercontent.com/userapp-io/stripe-demo/master/img/pricing.html.png)
+![](https://raw.githubusercontent.com/userapp-io/stripe-demo/master/img/signup.html.png)
+
 ## Getting Started
 
 **Sign up for UserApp and Stripe**
