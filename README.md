@@ -24,7 +24,7 @@ Open the file `pricing.html` in your browser. If it works, it should display you
 
 Click on "Sign Up" on one of the plans. This should take you to `signup.html` where you can enter your information and a credit card. It will also display more detailed plan costs.
 
-Once the form has been filled in and submitted, the stated amount will be charged from the credit card and the user will be signed up with the selected subscription. A message will be shown with a login button.
+Once the form has been filled in and submitted, the stated amount will be charged from the credit card and the user will be signed up with the selected subscription. A redirect to `final.html` will be made, displaying a message with a login button.
 
 ## Help
 
