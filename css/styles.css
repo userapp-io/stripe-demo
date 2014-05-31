@@ -1,0 +1,161 @@
+/* UserApp */
+
+html, body {
+	background-color: white;
+	font-family: 'Roboto', 'Open Sans', sans-serif;
+	padding: 30px 0;
+	margin: 0;
+	height: 100%;
+}
+body {
+	display: table;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.container {
+	width: 100%;
+	display: table-cell;
+	text-align: center;
+	vertical-align: middle;
+}
+
+strong {
+	font-weight: 600;
+}
+
+h2 {
+	margin-bottom: 20px;
+	margin-top: 0;
+	color: #565d64;
+	font-weight: 300;
+	font-size: 31.5px;
+	line-height: 40px;
+}
+
+p {
+	font-size: 19px;
+	line-height: 26px;
+	color: #7C858E;
+	font-weight: 300;
+}
+
+ul.pricing {
+	list-style: none;
+	margin: 0;
+	margin-bottom: 50px;
+	padding: 0;
+}
+ul.pricing li {
+	color: #7C858E;
+	width: 300px;
+	background: white;
+	display: inline-block;
+	margin-top: 40px;
+	margin-right: 2px;
+	margin-left: 2px;
+	border: 1px solid #EDEDED;
+	border-radius: 5px;
+}
+.pricing-header {
+	width: 100%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding: 5px 10px;
+	background: #F6F6F6;
+	color: #555;
+	border-bottom: 1px solid #EDEDED;
+}
+.pricing-header h3 {
+	font-size: 19px;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	font-weight: 400;
+}
+.pricing-price {
+	padding-bottom: 20px;
+	border-bottom: 1px solid rgba(255,255,255,0.1);
+	color: #08c;
+}
+.pricing-price .price {
+	padding-top: 30px;
+	min-height: 135px;
+}
+.pricing-price sub {
+	position: relative;
+	top: -21px;
+	right: -8px;
+	display: inline-block;
+	font-size: 26px;
+	font-weight: 400;
+	margin-right: 10px;
+	margin-left: -25px;
+}
+.pricing-price strong {
+	display: inline-block;
+	font: 48px arial,sans;
+	margin-left: -31px;
+	margin: 0;
+}
+.pricing-price span {
+	color: #999;
+}
+.pricing-body {
+	width: 100%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding: 15px;
+	color: #999;
+}
+.pricing-body+.pricing-body {
+	padding-top: 0;
+}
+.pricing-body ul {
+	margin: 0;
+	padding: 0 35px;
+	padding-top: 10px
+}
+.pricing-body ul li {
+	margin: 0;
+	border: none;
+	padding: 0;
+	width: 100%;
+	text-align: left;
+}
+.pricing-body ul li.disabled {
+	color: #ddd;
+}
+.pricing-body ul li i {
+	padding-right: 5px;
+}
+.pricing-body ul li i.fa-times {
+	padding-left: 1px;
+	padding-right: 7px;
+}
+.pricing-footer {
+	width: 100%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+.pricing-footer .btn {
+	position: relative;
+	bottom: -18px;
+}
+
+.error .alert {
+	display: inline-block;
+	margin: 50px;
+	line-height: 2;
+}
+
+.btn {
+	text-transform: uppercase;
+	font-size: 13px;
+	line-height: 1;
+	padding: 12px 25px;
+	-moz-transition: all 0.1s linear;
+	-o-transition: all 0.1s linear;
+	transition: all 0.1s linear;
+}

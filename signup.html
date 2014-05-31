@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Sign Up | UserApp + Stripe Demo</title> 
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Demonstration of how to use UserApp and Stripe to create pricing with sign-up." />
+
+	<!-- Fonts and CSS -->
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<link href="css/animate.min.css" rel="stylesheet" type="text/css">
+	<link href="css/styles.css" rel="stylesheet" type="text/css">
+
+	<!-- jQuery -->
+	<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+
+	<!-- Stripe.js -->
+	<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+
+	<!-- UserApp JavaScript -->
+	<script src="js/config.js"></script>
+	<script src="https://app.userapp.io/js/userapp.client.js"></script>
+	<script>
+		/* 
+		 * Initialize UserApp with your App Id and an API token
+		 * Set these values in js/config.js
+		 */
+		UserApp.initialize({ appId: USERAPP_APP_ID, token: USERAPP_TOKEN });
+
+		// Initialize Stripe with a Publishable Key
+		Stripe.setPublishableKey(STRIPE_PUBLISHABLE_KEY);
+
+		// Parse query string to get price list and plan id
+		function getQueryVariable(variable) {
+			var query = window.location.search.substring(1);
+			var vars = query.split('&');
+			for (var i = 0; i < vars.length; ++i) {
+				var pair = vars[i].split('=');
+				if (pair[0] == variable){ return pair[1]; }
+			}
+			return false;
+		}
+
+		var price_list_id = getQueryVariable('price_list_id');
+		var plan_id = getQueryVariable('plan_id');
+
+		// Get plan info
+		UserApp.Plan.get({
+		    price_list_id: price_list_id,
+		    plan_id: plan_id
+		}, function(error, result) {
+			$('#info-loader').hide();
+
+			if (!error) {
+				// Print info
+				var plan = result[0];
+				$('#info-name').text(plan.name);
+				$('#info-billing-period').text(plan.billing_period.charAt(0).toUpperCase() + plan.billing_period.slice(1));
+				$('#info-price').text('$' + plan.price);
+				$('#info-prorated-discount').text('-$' + plan.price);
+				$('#info-total-today').text('$' + plan.price);
+			} else {
+				// An error occured
+				$('#subscription-info').text('Error: ' + error.message);
+			}
+
+			$('#subscription-info').show();
+		});
+
+		// Display an error message
+		function displayError(message) {
+			if (message) {
+				$('#error-message').text(message);
+				$('#error').show();
+
+				showLoader(false);
+			} else {
+				$('#error').hide();
+			}
+		}
+
+		// Show/hide the loader anim in the button
+		function showLoader(show) {
+			if (show) {
+				$('button').attr('disabled', 'true');
+				$('button > span').hide();
+				$('button > img').show();
+			} else {
+				$('button > img').hide();
+				$('button > span').show();
+				$('button').attr('disabled', null);
+			}
+		}
+
+		// Saves the credit card with Stripe
+		function saveCreditCard(callback) {
+			Stripe.card.createToken({
+				name: $('#first_name').val(),
+				number: $('#card_number').val(),
+			    cvc: $('#cvc').val(),
+			    exp_month: $('#expiration_month').val(),
+			    exp_year: $('#expiration_year').val()
+			}, function(status, response) {
+				if (response.error) {
+					displayError(response.error.message);
+				} else {
+					callback(response);
+				}
+			});
+		}
+
+		// Saves the user with UserApp
+		function saveUser(callback) {
+			UserApp.setToken(null); // We don't need a token for this
+			UserApp.User.save({
+				login: $('#email').val(),
+				first_name: $('#first_name').val(),
+				last_name: $('#last_name').val(),
+				email: $('#email').val(),
+				password: $('#password').val(),
+				subscription: {
+					price_list_id: price_list_id,
+					plan_id: plan_id
+				}
+			}, function(error) {
+				if (error) {
+					displayError(error.message);
+				} else {
+					callback();
+				}
+			});
+		}
+
+		// Logs in the user (to be able to save a payment method)
+		function loginUser(callback) {
+			UserApp.User.login({
+				login: $('#email').val(),
+				password: $('#password').val()
+			}, function(error) {
+				if (error) {
+					displayError(error.message);
+				} else {
+					callback();
+				}
+			});
+		}
+
+		// Saves the Stripe token in a payment method in UserApp
+		function savePaymentMethod(tokenId, callback) {
+			UserApp.User.PaymentMethod.save({
+			    user_id: 'self',
+			    name: 'Stripe',
+			    processor: 'stripe',
+			    type: 'creditcard',
+			    data: { token_id: tokenId }
+			}, function(error) {
+				if (error) {
+					displayError(error.message);
+				} else {
+					callback();
+				}
+			});
+		}
+
+		/*
+		 * Signup method that saves the card in Stripe 
+		 * and then signs up the user with UserApp with a Payment Method.
+		 */
+		function signup() {
+			displayError(null);
+			showLoader(true);
+
+			// Create a Stripe card
+			saveCreditCard(function(response) {
+				// Save the user in UserApp
+				saveUser(function() {
+					// Log in the user
+					loginUser(function() {
+						// Save the Stripe card in a payment method in UserApp
+						savePaymentMethod(response.id, function() {
+					    	// And finally, set the subscription in UserApp
+					    	UserApp.User.save({
+								user_id: 'self',
+								subscription: {
+									price_list_id: price_list_id,
+									plan_id: plan_id
+								}
+							}, function(error) {
+								if (!error) {
+									window.location.href = 'final.html';
+						    	} else {
+						    		// Error when setting subscription
+						    		displayError(error.message);
+						    	}
+							});
+						});
+					});
+				});
+			});
+
+			return false;
+		}
+	</script>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<h2>Sign Up</h2>
+			<p>
+				Demonstration of how to use UserApp and Stripe to create pricing with sign-up.
+			</p>
+		</div>
+		<div class="row" style="width: 1200px; margin: 50px; text-align: left; display: inline-block;">
+			<div class="col-md-8">
+				<form class="form" role="form" onsubmit="return signup()">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label for="first_name" class="control-label">First Name</label>
+								<input type="text" class="form-control" id="first_name" placeholder="Enter your first name">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label for="last_name" class="control-label">Last Name</label>
+								<input type="text" class="form-control" id="last_name" placeholder="Enter your last name">
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label for="email" class="control-label">Email</label>
+								<input type="email" class="form-control" id="email" placeholder="Enter your email address">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label for="password" class="control-label">Password</label>
+								<input type="password" class="form-control" id="password" placeholder="Enter a new password">
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<hr>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label for="card_number" class="control-label">Card Number</label>
+								<input type="text" size="20" class="form-control" id="card_number" placeholder="Enter your card number">
+							</div>
+						</div>
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="expiration_month" class="control-label">Expiration</label>
+								<br>
+								<input type="text" size="2" class="form-control" id="expiration_month" placeholder="MM" style="display: inline-block; width: 40%;">
+								<span> / </span>
+								<input type="text" size="2" class="form-control" id="expiration_year" placeholder="YY" style="display: inline-block; width: 40%;">
+							</div>
+						</div>
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="cvc" class="control-label">CVC</label>
+								<input type="text" size="4" class="form-control" id="cvc" placeholder="XXXX">
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<hr>
+					</div>
+					<div class="row">
+						<div class="form-group" style="text-align: right;">
+							<button type="submit" class="btn btn-info">
+								<span>Create Account &rarr;</span>
+								<img src="img/ajax-loader-btn.gif" style="display: none; width: 13px;">
+							</button>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="col-md-4">
+				<div class="panel panel-default" style="margin-top: 15px;">
+					<div class="panel-heading">
+						<h3 class="panel-title">Subscription Details</h3>
+					</div>
+					<div class="panel-body">
+						<div id="info-loader" style="text-align: center">
+							<img src="img/ajax-loader.gif" style="padding: 100px;">
+						</div>
+						<div id="subscription-info" style="display: none;">
+							<h4>Plan Details</h4>
+
+							<div class="row">
+								<div class="col-md-8">Plan:</div>
+								<div class="col-md-4" style="text-align: right;" id="info-name"></div>
+							</div>
+
+							<hr>
+							<h4>Plan Costs</h4>
+							<div class="row">
+								<div class="col-md-8">Billing Period:</div>
+								<div class="col-md-4" style="text-align: right;" id="info-billing-period"></div>
+							</div>
+							<div class="row">
+								<div class="col-md-8">Monthly Cost:</div>
+								<div class="col-md-4" style="text-align: right;" id="info-price"></div>
+							</div>
+							<div class="row">
+								<div class="col-md-8">Prorated Discount:</div>
+								<div class="col-md-4" style="text-align: right;" id="info-prorated-discount"></div>
+							</div>
+
+							<hr>
+							<h4>Total Due Today: <span style="float: right;" id="info-total-today"></span></h4>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="error" class="row" style="display: none;">
+			<div id="error-message" class="alert alert-danger" style="border-radius: 0;"></div>
+		</div>
+	</div>
+</body>
+</html>

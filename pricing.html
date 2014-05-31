@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Pricing | UserApp + Stripe Demo</title> 
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Demonstration of how to use UserApp and Stripe to create pricing with sign-up." />
+
+	<!-- Fonts and CSS -->
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<link href="css/animate.min.css" rel="stylesheet" type="text/css">
+	<link href="css/styles.css" rel="stylesheet" type="text/css">
+
+	<!-- jQuery -->
+	<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+
+	<!-- UserApp JavaScript -->
+	<script src="js/config.js"></script>
+	<script src="https://app.userapp.io/js/userapp.client.js"></script>
+	<script>
+		/* 
+		 * Initialize UserApp with your App Id and an API token
+		 * Set these values in js/config.js
+		 */
+		UserApp.initialize({ appId: USERAPP_APP_ID, token: USERAPP_TOKEN });
+
+		// Get the plans
+		UserApp.Plan.search({
+		    price_list_id: USERAPP_PRICE_LIST_ID,
+		    fields: ['plan_id', 'name', 'price', 'billing_period', 'features', 'properties']
+		}, function(error, result) {
+			if (!error) {
+				var plans = result.items;
+
+				if (plans.length > 0) {
+					// Sort the plans by price
+					plans.sort(function(a, b) {
+						return ((a.price < b.price) ? -1 : ((a.price > b.price) ? 1 : 0));
+					});
+
+					// Render the pricing table
+					$('#price-table').html(renderPricingTable(result.items));
+				} else {
+					// Missing plans
+					$('#price-table').hide();
+					$('#error-missing-plans').show();
+				}
+			} else {
+				// An error occured
+				$('#price-table').hide();
+				$('#error-' + error.name.toLowerCase().replace(/_/g, '-')).show();
+			}
+		});
+
+		// Render pricing table
+		function renderPricingTable(plans) {
+			var ul = $('<ul>').addClass('pricing');
+
+			for (var i = 0; i < plans.length; ++i) {
+				var plan = plans[i];
+
+				var li = $('<li>')
+					// The header
+					.append($('<div>').addClass('pricing-header')
+						.append($('<h3>').text(plan.name))
+						.append((function() {
+							// Price
+							var price = $('<div>').addClass('pricing-price');
+
+							if (plan.price && plan.price > 0) {
+								price
+									.append($('<sub>').text('$'))
+									.append($('<strong>').text(plan.price));
+
+								// Billing period
+								if (plan.billing_period == 'annually') {
+									price.append($('<span>').text('/year'));
+								} else {
+									price.append($('<span>').text('/month'));
+								}
+							} else {
+								price.append($('<strong>').addClass('free').text('Free'));
+							}
+
+							return price;
+						})())
+					)
+					// Feature list
+					.append($('<div>').addClass('pricing-body')
+						.append((function() {
+							var ul = $('<ul>');
+							for (var feature in plan.features) {
+								var li = $('<li>');
+								if (plan.features[feature].value) {
+									li.append($('<i>').addClass('fa fa-check'));
+								} else {
+									li.append($('<i>').addClass('fa fa-times'));
+									li.addClass('disabled');
+								}
+								li.append($('<span>').text(feature));
+								ul.append(li);
+							}
+							return ul;
+						})())
+					)
+					// Property list
+					.append($('<div>').addClass('pricing-body')
+						.append((function() {
+							var ul = $('<ul>');
+							for (var property in plan.properties) {
+								var li = $('<li>');
+								li.append($('<i>').addClass('fa fa-star-o'));
+								li.append($('<span>').text(property + ': ' + plan.properties[property].value));
+								ul.append(li);
+							}
+							return ul;
+						})())
+					)
+					// The footer
+					.append($('<div>').addClass('pricing-footer')
+						.append($('<a>').attr('href', 'signup.html?price_list_id='+USERAPP_PRICE_LIST_ID+'&plan_id='+plan.plan_id).addClass('btn btn-info').text('Sign Up'))
+					);
+
+				// Add this plan to the list
+				ul.append(li);
+			}
+
+			return ul;
+		}
+	</script>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<h2>UserApp + Stripe</h2>
+			<p>
+				Demonstration of how to use UserApp and Stripe to create pricing with sign-up.
+			</p>
+		</div>
+		<div id="price-table" class="row">
+			<img src="img/ajax-loader.gif" style="padding: 100px;">
+		</div>
+		<div id="error-invalid-argument-app-id" class="row error" style="display: none;">
+			<div class="alert">
+				<div>Invalid App Id. Please replace <code>YOUR_APP_ID</code> in <code>js/config.js</code> with your own App Id.</div>
+				<div><a href="http://help.userapp.io/customer/portal/articles/1322336-how-do-i-find-my-app-id-" target="_blank">How to find your App Id...</a></div>
+			</div>
+		</div>
+		<div id="error-invalid-credentials" class="row error" style="display: none;">
+			<div class="alert">
+				<div>Invalid token. Please replace <code>YOUR_TOKEN</code> in <code>js/config.js</code> with a token with permissions set to <code>plan.search</code>.</div>
+				<div><a href="http://help.userapp.io/customer/portal/articles/1364103-how-do-i-create-an-api-token-" target="_blank">How to create an API token...</a></div>
+			</div>
+		</div>
+		<div id="error-invalid-argument-price-list-id" class="row error" style="display: none;">
+			<div class="alert">
+				<div>Invalid Price List Id. Please replace <code>PRICE_LIST_ID</code> in <code>js/config.js</code> with an existing Price List Id.</div>
+				<div><a href="http://help.userapp.io/customer/portal/articles/1245685-setting-up-your-price-lists" target="_blank">How to set up your price lists...</a></div>
+			</div>
+		</div>
+		<div id="error-missing-plans" class="row error" style="display: none;">
+			<div class="alert">
+				<div>This price list doesn't have any plans.</div>
+				<div><a href="https://app.userapp.io/#/price-lists/" target="_blank">Click here to create a new plan.</a></div>
+			</div>
+		</div>
+		<div class="row">
+			<p style="margin-bottom: 0;">
+				Questions? See <a href="README.md" target="_blank">README.md</a> for instructions.
+			</p>
+		</div>
+	</div>
+</body>
+</html>
